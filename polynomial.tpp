@@ -179,6 +179,81 @@ T         Polynomial<T, deg_type>::at(deg_type k)      &&
     return move(it->second);
 }
 
+template <typename T, typename deg_type>
+T       Polynomial<T, deg_type>::operator ()(T const & value) const
+{
+    auto squareMultiply = [](T const & v, unsigned deg)
+        {   
+            if (deg == 0) return T(1);
+            unsigned hiBit = ~((~0U) >> 1U);
+            while ((deg & hiBit) == 0U) hiBit >>= 1U;
+            // hiBit masks first bit of deg.
+            
+            hiBit >>= 1U;
+            T prod = v; // consume the bit.
+            
+            while (hiBit != 0)
+            {
+                prod *= prod;
+                if (deg & hiBit) prod *= v;
+                hiBit >>= 1U;
+            }
+            return prod;
+        };
+    
+    if (coeffs.empty()) return T();
+    // under here coeffs is nonempty.
+
+    if (coeffs.size() == 1)
+        return coeffs.begin()->second * squareMultiply(value, coeffs.begin()->first);
+    // under here coeffs has at least 2 elements.
+    map<unsigned, T> power_memo { { 0,  T(1) }, { 1, value } };
+    function<T const & (unsigned)> power = [& power, & value, & power_memo, & squareMultiply](unsigned k)
+        {
+            auto pow_it = power_memo.find(k);
+            if (pow_it == power_memo.end())
+            {
+                auto p = squareMultiply(value, k);
+                power_memo[k] = p;
+                return p;
+            }
+            else return pow_it->second;
+        };
+
+    vector<unsigned> power_diffs;
+    for (auto it2 =  coeffs.begin(), it = it2++;
+              it2 != coeffs.end();
+            ++it2,                ++it)
+    {
+      power_diffs.push_back(it2->first - it->first);
+    }
+
+    T sum = T();
+
+    auto it2 = coeffs.rbegin(),
+         it  = it2++;
+    auto itd = power_diffs.rbegin();
+    for (; it2 != coeffs.rend(); ++it, ++it2, ++itd)
+    {
+        sum += it->second;
+        sum *= power(*itd);
+    }
+    sum += it->second;
+    sum *= power(it->first);
+
+    return sum;
+}
+
+template <typename T, typename deg_type>
+Polynomial<T, deg_type> Polynomial<T, deg_type>::deriv() const
+{
+    // checkd: the operation creates a valid polynmonial.
+    Polynomial d;
+    for (auto it = coeffs.begin(); ++it != coeffs.end();)
+        d.coeffs[it->first - 1] = it->first * it->second;
+    return d;
+}
+
 // Helper functions //
 
 template<typename T> bool equal_minus_one(const T & value)
@@ -242,7 +317,7 @@ bool read_monom(std::istringstream & is, deg_type & deg, T & coeff)
     is >> inp;
 
     if (inp == "") is.setstate(ios_base::failbit);
-    else if (inp[0] == 'x' or (inp.size() >= 2 and inp[0] == '+' and inp[1] == 'x')) // starts with "x" or "+x"
+    else if (inp[0] == 'x' || (inp.size() >= 2 && inp[0] == '+' && inp[1] == 'x')) // starts with "x" or "+x"
     {
         auto x_pos = inp.find('x');
         if      (inp.back() == 'x')     { deg = 1; coeff = T(1); }
@@ -257,7 +332,7 @@ bool read_monom(std::istringstream & is, deg_type & deg, T & coeff)
             else                is.setstate(ios_base::failbit);
         }
     }
-    else if (inp[0] == '-' and inp[1] == 'x') // starts with "-x"
+    else if (inp[0] == '-' && inp[1] == 'x') // starts with "-x"
     {
         if (inp.back() == 'x') { deg = 1; coeff = T(-1); }
         else
@@ -291,7 +366,7 @@ bool read_monom(std::istringstream & is, deg_type & deg, T & coeff)
             {
                 inp[x_pos] = inp[x_pos + 1] = ' ';
                 istringstream iss_inp(inp);
-                if (not(iss_inp >> coeff >> deg)) is.setstate(ios_base::failbit);
+                if (!(iss_inp >> coeff >> deg)) is.setstate(ios_base::failbit);
             }
         }
     }
@@ -357,7 +432,7 @@ size_t Polynomial<T, deg_type>::hash() const noexcept
 } // namespace Modulus
 
 
-
+/*
 // Polynomial<Z2> //
 namespace Modulus
 {
@@ -368,7 +443,7 @@ template <typename deg_type>
 ZPoly<2, deg_type>::Polynomial(Z<2> const & z, deg_type deg)
     : coeffs(z == Z<2>() ? 0 : deg + 1)
 {
-    if (not coeffs.empty()) coeffs[deg] = true;
+    if (!coeffs.empty()) coeffs[deg] = true;
 }
 
 template <typename deg_type>
@@ -378,7 +453,7 @@ ZPoly<2, deg_type>::fromCoeffVector(std::vector<Z<2>> const & coeffs)
     ZPoly<2, deg_type>  res;
     res.coeffs.reserve(coeffs.size());
     for (Z<2> z : coeffs) res.coeffs.push_back(z != Z<2>());
-    while (not res.coeffs.empty() and not res.coeffs.back()) res.coeffs.pop_back();
+    while (!res.coeffs.empty() && !res.coeffs.back()) res.coeffs.pop_back();
     return res;
 }
 
@@ -427,7 +502,7 @@ ZPoly<2, deg_type>::add_with_offset(ZPoly<2, deg_type> const & p, size_t offset)
     
     if (v.size() < w.size() + offset) v.resize(w.size() + offset);
     for (size_t i = 0; i < w.size(); ++i, ++offset) v[offset] = v[offset] != w[i];
-    while (not v.empty() and not v.back()) v.pop_back();
+    while (!v.empty() && !v.back()) v.pop_back();
     
     return *this;
 }
@@ -469,7 +544,7 @@ ZPoly<2, deg_type>::divmod(ZPoly<2, deg_type> a, ZPoly<2, deg_type> const & b)
     }
     
     std::reverse(q.coeffs.begin(), q.coeffs.end());
-    while (not a.coeffs.empty() and not a.coeffs.back()) a.coeffs.pop_back();
+    while (!a.coeffs.empty() && !a.coeffs.back()) a.coeffs.pop_back();
     return std::make_pair( std::move(q), std::move(a) );
 }
 
@@ -512,7 +587,7 @@ std::istream & operator >>(std::istream & is, ZPoly<2, deg_type>       & p)
     p = K();
     std::string inp;
     if (!(is >> inp)) return is;
-    for (auto & c : inp) if (c == '+' or c == '-') c = ' ';
+    for (auto & c : inp) if (c == '+' || c == '-') c = ' ';
 
     istringstream iss(inp);
     
@@ -536,4 +611,4 @@ std::istream & operator >>(std::istream & is, ZPoly<2, deg_type>       & p)
 }
 
 } // namespace Modulus
-
+*/

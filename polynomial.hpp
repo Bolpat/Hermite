@@ -29,8 +29,9 @@
 #include <map>
 
 #include <algorithm>
+#include <functional>
 
-#include "Z.hpp" // for Polynomial<Z2> specialisattion.
+//#include "Z.hpp" // for Polynomial<Z2> specialisattion.
 
 namespace Modulus
 {
@@ -45,7 +46,7 @@ template <typename T, typename deg_type>    Polynomial<T, deg_type> operator +  
 template <typename T, typename deg_type>    Polynomial<T, deg_type> operator *  (Polynomial<T, deg_type> const &,  Polynomial<T, deg_type> const &);
 template <typename T, typename deg_type>    std::ostream &          operator << (std::ostream &,                   Polynomial<T, deg_type> const &);
 template <typename T, typename deg_type>    std::istream &          operator >> (std::istream &,                   Polynomial<T, deg_type>       &);
-
+/*
 template <unsigned p, typename deg_type = size_t>
 using ZPoly = Polynomial<Z<p>, deg_type>;
 
@@ -55,7 +56,7 @@ template <typename deg_type>    ZPoly<2, deg_type>  operator *  (ZPoly<2, deg_ty
 
 template <typename deg_type>    std::ostream &      operator << (std::ostream & os, ZPoly<2, deg_type>  const & p);
 template <typename deg_type>    std::istream &      operator >> (std::istream & is, ZPoly<2, deg_type>        & p);
-
+*/
 
 template <typename T, typename deg_type = size_t>
 class Eks
@@ -89,14 +90,14 @@ public:
 template <typename T, typename deg_type> /* default deg_type = size_t*/
 class Polynomial // non-literal type (non-trivial destructor)
 {
-    static_assert(std::numeric_limits<deg_type>::is_integer and not std::numeric_limits<deg_type>::is_signed,
+    static_assert(std::numeric_limits<deg_type>::is_integer && !std::numeric_limits<deg_type>::is_signed,
             "deg_type must be an unsigned integer.");
     
 private:
     std::map<deg_type, T> coeffs;
     
 public:
-    static constexpr Eks<T, deg_type> X = Eks<T, deg_type>();
+    //static constexpr Eks<T, deg_type> X = Eks<T, deg_type>();
 
     Polynomial() { }
     Polynomial(T const &, deg_type deg = 0);
@@ -148,13 +149,17 @@ public:
     
             T const &       at              (deg_type) const &;
             T               at              (deg_type)      &&;
+            
+            T               operator ()     (T const &) const;
+            
+            Polynomial      deriv           () const;
     
     friend  std::ostream &  operator << <>  (std::ostream &, Polynomial const &);
     friend  std::istream &  operator >> <>  (std::istream &, Polynomial       &);
     
             size_t       hash() const noexcept;
 };
-
+/*
 // Represents a Polynomial of Z<2> using vector<bool>.
 // Provides usual arithmetic, equality comparison, plugging in.
 // Maybe like usual Polynomial class with std::set<deg_type> instead of std::vector<bool>.
@@ -223,7 +228,7 @@ public:
     
             size_t hash() const noexcept { return std::hash<std::vector<bool>>() (coeffs); }
 };
-
+*/
 } // namespace Modulus
 
 namespace std
