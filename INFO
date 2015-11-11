@@ -1,0 +1,1 @@
+This exists to use compile the program with clang++ 3.3 or g++ 4.7 with -std=c++11 option.
