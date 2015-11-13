@@ -17,7 +17,7 @@
 using namespace std;
 using namespace Modulus;
 
-typedef Polynomial<double>  Poly;
+using Poly = Polynomial<double>;
 
 map<double, vector<double>> Table;
 bool                        Verbose = false;
@@ -144,15 +144,15 @@ void print_v(vector<vector<double>> const & v)
     cout << "\n}";
 }
 
+int fac(int n)
+{
+    int r = 1;
+    for (int i = 2; i < n; ++i) r *= i;
+    return r;
+}
+
 pair<vector<double>,vector<double>> hermite_ipol()
 {
-    auto fac = [](int n)
-        {
-            int r = 1;
-            for (int i = 2; i < n; ++i) r *= i;
-            return r;
-        };
-    
     int n = 0; // size of the system aka. total # of ys in Table.
     vector<double> xs;
     vector<vector<double>> yss;
@@ -191,17 +191,14 @@ pair<vector<double>,vector<double>> hermite_ipol()
     return make_pair(move(xs), move(as));
 }
 
+bool ex_table()
+{
+    if (Table.empty()) cerr << "Error: No file has been loaded." << endl;
+    return !Table.empty();
+}
+
 bool interactive(istream & in)
 {
-    auto ex_table = []()
-        {
-            if (Table.empty())
-            {
-                cerr << "Error: No file has been loaded." << endl;
-                return false;
-            }
-            return true;
-        };
     string command;
     if (in >> command) switch (command[0])
     {
@@ -226,16 +223,14 @@ bool interactive(istream & in)
                 auto x_a       = hermite_ipol();
                 auto const & x = x_a.first;
                 auto const & a = x_a.second;
-                if (!a.size())
+                if (a.size() == 0)
                 {
                     cerr << "Error: no coefficents generated. This is an internal error and not your fault." << endl;
                     return false;
                 }
-                Poly N = 1.0;
-                auto n = [&N, &x](int k) { return N *= Poly(1, 1) - x[k]; };
-                
-                P = a.front();
-                for (int i = 1; i < a.size(); ++i) P += a[i] * n(i - 1);
+                Poly N = Poly(1, 1) - x[0];
+                P = a.front() * N;
+                for (int i = 1; i < a.size(); ++i) P += a[i] * (N *= Poly(1, 1) - x[i]);
                 cout << "Polynomial successfully calculated." << endl;
             }
             else

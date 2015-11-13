@@ -161,47 +161,53 @@ T         Polynomial<T, deg_type>::at(deg_type k)      &&
 }
 
 template <typename T, typename deg_type>
+T squareMultiply(T const & v, deg_type deg)
+{   
+    if (deg == 0) return T(1);
+    deg_type zero = 0;
+    deg_type hiBit = ~((~zero) >> 1U);
+    while ((deg & hiBit) == zero) hiBit >>= 1U;
+    // hiBit masks first bit of deg.
+    
+    hiBit >>= 1U;
+    T prod = v; // consume the bit.
+    
+    while (hiBit != 0)
+    {
+        prod *= prod;
+        if (deg & hiBit) prod *= v;
+        hiBit >>= 1U;
+    }
+    return prod;
+}
+
+template <typename T, typename deg_type>
+T power(T const & value, unsigned k, std::map<deg_type, T> & power_memo)
+{
+    auto pow_it = power_memo.find(k);
+    if (pow_it == power_memo.end())
+    {
+        auto p = squareMultiply(value, k);
+        power_memo[k] = p;
+        return p;
+    }
+    else return pow_it->second;
+}
+
+template <typename T, typename deg_type>
 T       Polynomial<T, deg_type>::operator ()(T const & value) const
 {
-    auto squareMultiply = [](T const & v, unsigned deg)
-        {   
-            if (deg == 0) return T(1);
-            unsigned hiBit = ~((~0U) >> 1U);
-            while ((deg & hiBit) == 0U) hiBit >>= 1U;
-            // hiBit masks first bit of deg.
-            
-            hiBit >>= 1U;
-            T prod = v; // consume the bit.
-            
-            while (hiBit != 0)
-            {
-                prod *= prod;
-                if (deg & hiBit) prod *= v;
-                hiBit >>= 1U;
-            }
-            return prod;
-        };
-    
     if (coeffs.empty()) return T();
     // under here coeffs is nonempty.
 
     if (coeffs.size() == 1)
         return coeffs.begin()->second * squareMultiply(value, coeffs.begin()->first);
     // under here coeffs has at least 2 elements.
-    map<unsigned, T> power_memo { { 0,  T(1) }, { 1, value } };
-    function<T const & (unsigned)> power = [& power, & value, & power_memo, & squareMultiply](unsigned k)
-        {
-            auto pow_it = power_memo.find(k);
-            if (pow_it == power_memo.end())
-            {
-                auto p = squareMultiply(value, k);
-                power_memo[k] = p;
-                return p;
-            }
-            else return pow_it->second;
-        };
+    std::map<deg_type, T> power_memo;
+    power_memo[0] = T(1);
+    power_memo[1] = value;
 
-    vector<unsigned> power_diffs;
+    std::vector<deg_type> power_diffs;
     for (auto it2 =  coeffs.begin(), it = it2++;
               it2 != coeffs.end();
             ++it2,                ++it)
@@ -217,10 +223,10 @@ T       Polynomial<T, deg_type>::operator ()(T const & value) const
     for (; it2 != coeffs.rend(); ++it, ++it2, ++itd)
     {
         sum += it->second;
-        sum *= power(*itd);
+        sum *= power(value, *itd, power_memo);
     }
     sum += it->second;
-    sum *= power(it->first);
+    sum *= power(value, it->first, power_memo);
 
     return sum;
 }
