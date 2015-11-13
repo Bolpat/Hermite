@@ -107,7 +107,7 @@ bool hermite_load(char const * const filename)
         Table[x] = move(ys);
     }
     
-    cout << "File '" << filename << "' successfully loaded." << endl;
+    if (Verbose) cout << "File '" << filename << "' successfully loaded." << endl;
     return true;
     
   fail:
@@ -167,7 +167,7 @@ pair<vector<double>,vector<double>> hermite_ipol()
             yss[i + j].push_back(kvp.second[k] / fac(k+1));
     }
     
-    if (Verbose) cout << "yss:\n"; print_v(yss); cout << '\n';
+    if (Verbose) { print_v(yss); cout << '\n'; }
     for (int i = 1; i < n; ++i)
     {
         auto l = xs.begin();
@@ -177,7 +177,7 @@ pair<vector<double>,vector<double>> hermite_ipol()
             if (*r == *l) continue;
             double y = (yss[j][i-1] - yss[j-1][i-1]) / (*r - *l);
             yss[j].push_back(y);
-            if (Verbose) cout << "yss:\n"; print_v(yss); cout << '\n';
+            if (Verbose) print_v(yss); cout << '\n';
         }
     }
     
@@ -186,7 +186,7 @@ pair<vector<double>,vector<double>> hermite_ipol()
     for (int i = 0; i < n; ++i)
         as[i] = yss[i][i];
     
-    cout << "Coefficients successfully calulated." << endl;
+    if (Verbose) cout << "Coefficients successfully calulated." << endl;
     
     return make_pair(move(xs), move(as));
 }
@@ -203,7 +203,7 @@ bool interactive(istream & in)
     if (in >> command) switch (command[0])
     {
         case 'h': cout << HELP << endl; break;
-        case 'q': cout << "Leaving." << endl; exit(0);
+        case 'q': if (Verbose) cout << "Leaving." << endl; exit(0);
         case 'v': if (ex_table())
         {
             for (auto const & kvp : Table)
@@ -231,7 +231,7 @@ bool interactive(istream & in)
                 Poly N = Poly(1, 1) - x[0];
                 P = a.front() * N;
                 for (int i = 1; i < a.size(); ++i) P += a[i] * (N *= Poly(1, 1) - x[i]);
-                cout << "Polynomial successfully calculated." << endl;
+                if (Verbose) cout << "Polynomial successfully calculated." << endl;
             }
             else
             {
@@ -265,7 +265,7 @@ bool interactive(istream & in)
         case 'd': if (ex_table())
         {
             P = P.deriv();
-            cout << "Polynmial replaced by its derivative." << endl;
+            if (Verbose) cout << "Polynmial replaced by its derivative." << endl;
         }
             break;
         case 't': if (ex_table())
@@ -298,11 +298,12 @@ int main(int argc, char ** argv)
     stringstream str;
     
     while (--argc && ++argv) str << *argv << ' ';
-    do cout << "> " << flush; while (interactive(str));
+    while (interactive(str))
+        ;
 
     if (!str.eof())
     {
-        cout << "Some error occoured. Leaving." << endl;
+        cerr << "Some error occoured. Leaving." << endl;
         return 1;
     }
     
