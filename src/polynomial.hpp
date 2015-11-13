@@ -145,4 +145,4 @@ struct hash<Modulus::Polynomial<T, deg_type>>
 
 
 // As polynomial is a temlate class, it is necessary to include the tpp-file as well.
-#include "Polynomial.tpp"
+#include "polynomial.tpp"
