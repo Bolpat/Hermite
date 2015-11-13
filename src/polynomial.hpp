@@ -1,6 +1,6 @@
 #pragma once
 
-// Compile with clang++-3.3 -std=c++11
+// Compile with clang++-3.0 -std=c++11
 
 #include <iostream>
 #include <sstream>

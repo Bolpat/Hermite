@@ -1,3 +1,5 @@
+// Compile with clang++-3.0 -std=c++11
+
 #include "polynomial.hpp"
 
 #include <cstdlib>
