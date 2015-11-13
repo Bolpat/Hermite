@@ -177,7 +177,7 @@ pair<vector<double>,vector<double>> hermite_ipol()
             if (*r == *l) continue;
             double y = (yss[j][i-1] - yss[j-1][i-1]) / (*r - *l);
             yss[j].push_back(y);
-            if (Verbose) print_v(yss); cout << '\n';
+            if (Verbose) { print_v(yss); cout << '\n'; }
         }
     }
     
@@ -228,9 +228,9 @@ bool interactive(istream & in)
                     cerr << "Error: no coefficents generated. This is an internal error and not your fault." << endl;
                     return false;
                 }
-                Poly N = Poly(1, 1) - x[0];
+                Poly N = 1;
                 P = a.front() * N;
-                for (int i = 1; i < a.size(); ++i) P += a[i] * (N *= Poly(1, 1) - x[i]);
+                for (int i = 1; i < a.size(); ++i) P += a[i] * (N *= Poly(1, 1) - x[i-1]);
                 if (Verbose) cout << "Polynomial successfully calculated." << endl;
             }
             else
