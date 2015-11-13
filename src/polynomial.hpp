@@ -1,24 +1,6 @@
 #pragma once
 
-// Compile with clang++-3.5 -std=c++14
-
-/* This file is part of Modulus.
- * 
- * Modulus is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- * MA 02110-1301, USA.
- */
+// Compile with clang++-3.3 -std=c++11
 
 #include <iostream>
 #include <sstream>
@@ -30,8 +12,6 @@
 
 #include <algorithm>
 #include <functional>
-
-//#include "Z.hpp" // for Polynomial<Z2> specialisattion.
 
 namespace Modulus
 {
@@ -46,17 +26,6 @@ template <typename T, typename deg_type>    Polynomial<T, deg_type> operator +  
 template <typename T, typename deg_type>    Polynomial<T, deg_type> operator *  (Polynomial<T, deg_type> const &,  Polynomial<T, deg_type> const &);
 template <typename T, typename deg_type>    std::ostream &          operator << (std::ostream &,                   Polynomial<T, deg_type> const &);
 template <typename T, typename deg_type>    std::istream &          operator >> (std::istream &,                   Polynomial<T, deg_type>       &);
-/*
-template <unsigned p, typename deg_type = size_t>
-using ZPoly = Polynomial<Z<p>, deg_type>;
-
-template <typename deg_type>    ZPoly<2, deg_type>  operator << (ZPoly<2, deg_type> , deg_type d);
-template <typename deg_type>    ZPoly<2, deg_type>  operator >> (ZPoly<2, deg_type> , deg_type d);
-template <typename deg_type>    ZPoly<2, deg_type>  operator *  (ZPoly<2, deg_type>  const &, ZPoly<2, deg_type>  const &);
-
-template <typename deg_type>    std::ostream &      operator << (std::ostream & os, ZPoly<2, deg_type>  const & p);
-template <typename deg_type>    std::istream &      operator >> (std::istream & is, ZPoly<2, deg_type>        & p);
-*/
 
 template <typename T, typename deg_type = size_t>
 class Eks
@@ -159,76 +128,7 @@ public:
     
             size_t       hash() const noexcept;
 };
-/*
-// Represents a Polynomial of Z<2> using vector<bool>.
-// Provides usual arithmetic, equality comparison, plugging in.
-// Maybe like usual Polynomial class with std::set<deg_type> instead of std::vector<bool>.
-template<typename deg_type>
-class Polynomial<Z<2>, deg_type> // non-literal class (non-trivial destructor)
-{
-private:
-    std::vector<bool> coeffs;
 
-    // Dangerous constructor. Use only when sure that highest coefficient is set true!
-    Polynomial(std::vector<bool>      && coeffs) : coeffs(coeffs) {  }
-    Polynomial(std::vector<bool> const & coeffs) : coeffs(coeffs) {  }
-
-    // Calculates v += (w >> offset)
-    Polynomial & add_with_offset(Polynomial const & p, size_t offset);
-
-public:
-    static constexpr Eks<Z<2>, deg_type> X = Eks<Z<2>, deg_type>();
-
-    Polynomial(Z<2> const & z = Z<2>(), deg_type deg = 0);
-
-    static  Polynomial      fromCoeffVector(std::vector<Z<2>> const & coeffs);
-    
-    friend  deg_type        deg(Polynomial const & p)    { return p.coeffs.empty() ? 0 : p.coeffs.size() - 1; }
-            Polynomial      with_monic(deg_type dg = 0) const;
-
-            bool            is_zero() const                                                 { return coeffs.empty(); }
-    friend  bool            operator ==     (Polynomial const & p, Polynomial const & q)    { return p.coeffs == q.coeffs; }
-    friend  bool            operator !=     (Polynomial const & p, Polynomial const & q)    { return p.coeffs != q.coeffs; }
-    friend  bool            operator <      (Polynomial const & p, Polynomial const & q)    { return p.coeffs <  q.coeffs; }
-    
-    friend  Polynomial      operator << <>  (Polynomial, deg_type d);
-    friend  Polynomial      operator >> <>  (Polynomial, deg_type d);
-            Polynomial &    operator<<=     (deg_type d) & { return *this = *this << d; }
-            Polynomial &    operator>>=     (deg_type d) & { return *this = *this >> d; }
-    
-    static  std::pair<Polynomial, Polynomial> divmod(Polynomial         a, Polynomial const & b);
-    static  void                              divmod(Polynomial const & a, Polynomial const & b, Polynomial & q, Polynomial & r);
-    
-            Polynomial      operator +      () const { return Polynomial(*this); }
-            Polynomial      operator -      () const { return Polynomial(*this); }
-
-    friend  Polynomial      operator +      (Z<2>       const & t,   Polynomial         q) { return q += Polynomial(t); }
-    friend  Polynomial      operator +      (Polynomial         p,   Z<2>       const & t) { return p += Polynomial(t); }
-    friend  Polynomial      operator -      (Z<2>       const & t,   Polynomial         q) { return q -= Polynomial(t); }
-    friend  Polynomial      operator -      (Polynomial         p,   Z<2>       const & t) { return p -= Polynomial(t); }
-    friend  Polynomial      operator *      (Polynomial const & p, Z<2> const & t) { return t == Z<2>(0) ? Polynomial() : p; }
-    friend  Polynomial      operator *      (Z<2> const & t, Polynomial const & p) { return p.operator*(t); }
-    
-    friend  Polynomial      operator +      (Polynomial         p, Polynomial const & q) { return p += q; }
-    friend  Polynomial      operator -      (Polynomial const & p, Polynomial const & q) { return p + q; }
-    friend  Polynomial      operator *  <>  (Polynomial const & p, Polynomial const & q);
-    friend  Polynomial      operator /      (Polynomial const & a, Polynomial const & b) { return divmod(a, b).first; }
-    friend  Polynomial      operator %      (Polynomial const & a, Polynomial const & b) { return divmod(a, b).second; }
-    
-            Polynomial &    operator *=     (Z<2> const & t)       { return t == Z<2>(0) ? *this = Polynomial() : *this; }
-    
-            Polynomial &    operator +=     (Polynomial const & p) { return add_with_offset(p, 0); }
-            Polynomial &    operator -=     (Polynomial const & p) { return *this += p; }
-            Polynomial &    operator *=     (Polynomial const & p) { return *this = *this * p; }
-            Polynomial &    operator /=     (Polynomial const & p) { return *this = *this / p; }
-            Polynomial &    operator %=     (Polynomial const & p) { return *this = *this % p; }
-            
-    friend  std::ostream &  operator << <>  (std::ostream & os, Polynomial const & p);
-    friend  std::istream &  operator >> <>  (std::istream & is, Polynomial       & p);
-    
-            size_t hash() const noexcept { return std::hash<std::vector<bool>>() (coeffs); }
-};
-*/
 } // namespace Modulus
 
 namespace std
