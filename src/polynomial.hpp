@@ -108,7 +108,8 @@ public:
             Polynomial      with_monic(deg_type dg = 0) const;
     
             T               leading_coeff() const { return coeffs.rbegin()->second; }
-    
+            bool            is_monomial()   const { return coeffs.size() == 1; }
+
             bool is_zero() const                                          { return coeffs.empty(); }
     friend  bool operator == (Polynomial const & p, Polynomial const & q) { return p.coeffs == q.coeffs; }
     friend  bool operator != (Polynomial const & p, Polynomial const & q) { return p.coeffs != q.coeffs; }
