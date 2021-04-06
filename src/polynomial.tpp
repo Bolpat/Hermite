@@ -207,8 +207,8 @@ T       Polynomial<T, deg_type>::operator ()(T const & value) const
     if (coeffs.size() == 1)
         return coeffs.begin()->second * squareMultiply(value, coeffs.begin()->first);
     // under here coeffs has at least 2 elements.
-    map<unsigned, T> power_memo { { 0,  T(1) }, { 1, value } };
-    function<T const & (unsigned)> power = [& power, & value, & power_memo, & squareMultiply](unsigned k)
+    std::map<unsigned, T> power_memo { { 0,  T(1) }, { 1, value } };
+    std::function<T const & (unsigned)> power = [& power, & value, & power_memo, & squareMultiply](unsigned k)
         {
             auto pow_it = power_memo.find(k);
             if (pow_it == power_memo.end())
@@ -220,7 +220,7 @@ T       Polynomial<T, deg_type>::operator ()(T const & value) const
             else return pow_it->second;
         };
 
-    vector<unsigned> power_diffs;
+    std::vector<unsigned> power_diffs;
     for (auto it2 =  coeffs.begin(), it = it2++;
               it2 != coeffs.end();
             ++it2,                ++it)
@@ -371,7 +371,7 @@ bool read_monom(std::istringstream & is, deg_type & deg, T & coeff)
         }
     }
 
-    return is;
+    return static_cast<bool>(is);
 }
 
 void str_replace(std::string & subject, std::string const & search, std::string const & replace)
